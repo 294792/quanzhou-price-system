@@ -36,39 +36,158 @@
   }
   .card.sales .go { background: #2f4b8f; }
   .foot { margin-top: 30px; color: rgba(255,255,255,.55); font-size: 12.5px; text-align: center; line-height: 1.8; }
+  /* 登录 */
+  .login-box {
+    width: 340px; max-width: 100%; background: #fff; color: #222; border-radius: 14px;
+    padding: 30px 30px 24px; box-shadow: 0 20px 60px rgba(0,0,0,.3);
+  }
+  .login-box h1 { margin: 0 0 6px; font-size: 21px; color: #14532d; text-align: center; }
+  .login-box .sub { margin: 0 0 20px; text-align: center; color: #999; font-size: 13px; }
+  .login-box label { display: block; color: #555; font-size: 13px; margin: 12px 0 5px; }
+  .login-box input {
+    width: 100%; border: 1px solid #ccd2da; border-radius: 6px; padding: 9px 12px; font-size: 15px;
+  }
+  .login-box input:focus { outline: none; border-color: #14532d; box-shadow: 0 0 0 3px rgba(20,83,45,.12); }
+  .login-box button {
+    width: 100%; margin-top: 20px; background: #14532d; color: #fff; border: 0; border-radius: 6px;
+    padding: 11px; font-size: 15px; cursor: pointer;
+  }
+  .login-box button:hover { background: #1e7a3f; }
+  .login-box .err { color: #d9534f; font-size: 13px; margin-top: 10px; text-align: center; min-height: 18px; }
   @media (max-width: 640px) { .head h1 { font-size: 23px; } }
 </style>
 </head>
 <body>
-  <div class="head">
+  <div class="login-box" id="loginWrap">
     <h1>泉州价格体系核算系统</h1>
-    <p>请选择版本入口，使用分配到的账号登录</p>
+    <p class="sub">请登录后选择版本</p>
+    <label>账号</label>
+    <input type="text" id="loginUser" autocomplete="off" placeholder="请输入账号">
+    <label>密码</label>
+    <input type="password" id="loginPass" placeholder="请输入密码">
+    <button id="loginBtn" type="button">登录</button>
+    <div class="err" id="loginErr"></div>
   </div>
-  <div class="cards">
-    <a class="card" href="full.html">
-      <span class="tag">完整版 · 内部使用</span>
-      <h2>价格核算系统（完整版）</h2>
-      <ul>
-        <li>零售价 / 批发价 / 成本 / 水工福利对比</li>
-        <li>经销商利润、代理商利润</li>
-        <li>支持 2–10 个品牌对比与汇总导出</li>
-      </ul>
-      <span class="go">进入完整版 →</span>
-    </a>
-    <a class="card sales" href="sales.html">
-      <span class="tag">业务员版 · 对外使用</span>
-      <h2>价格核算系统（业务员版）</h2>
-      <ul>
-        <li>零售价 / 批发价 / 水工福利对比</li>
-        <li>经销商利润</li>
-        <li>不含成本与代理商利润，便于对外报价</li>
-      </ul>
-      <span class="go">进入业务员版 →</span>
-    </a>
+
+  <div id="portal" style="display:none; width:100%; flex-direction:column; align-items:center;">
+    <div class="head">
+      <h1>泉州价格体系核算系统</h1>
+      <p>请选择版本入口</p>
+    </div>
+    <div class="cards">
+      <a class="card" href="full.html">
+        <span class="tag">完整版 · 内部使用</span>
+        <h2>价格核算系统（完整版）</h2>
+        <ul>
+          <li>零售价 / 批发价 / 成本 / 水工福利对比</li>
+          <li>经销商利润、代理商利润</li>
+          <li>支持 2–10 个品牌对比与汇总导出</li>
+        </ul>
+        <span class="go">进入完整版 →</span>
+      </a>
+      <a class="card sales" href="sales.html">
+        <span class="tag">业务员版 · 对外使用</span>
+        <h2>价格核算系统（业务员版）</h2>
+        <ul>
+          <li>零售价 / 批发价 / 水工福利对比</li>
+          <li>经销商利润</li>
+          <li>不含成本与代理商利润，便于对外报价</li>
+        </ul>
+        <span class="go">进入业务员版 →</span>
+      </a>
+    </div>
+    <div class="foot">
+      泉州明翔 · 价格体系核算<br>
+      两个版本保存的数据相互独立，互不影响
+    </div>
   </div>
-  <div class="foot">
-    泉州明翔 · 价格体系核算<br>
-    两个版本保存的数据相互独立，互不影响
-  </div>
+
+<script>
+'use strict';
+var AUTH_HASH = '86b86f393cc762ef6a6d6bf4ab0b99a42239cde1f5c9aebb0fb1940eee1a8a78';
+var SESSION_KEY = 'qz_portal_login';
+
+function sha256(ascii) {
+  function rightRotate(value, amount) { return (value >>> amount) | (value << (32 - amount)); }
+  var mathPow = Math.pow, maxWord = mathPow(2, 32), result = '';
+  var words = [], asciiBitLength = ascii.length * 8;
+  var hash = sha256.h = sha256.h || [], k = sha256.k = sha256.k || [];
+  var primeCounter = k.length;
+  var isComposite = {};
+  for (var candidate = 2; primeCounter < 64; candidate++) {
+    if (!isComposite[candidate]) {
+      for (var i = 0; i < 313; i += candidate) isComposite[i] = candidate;
+      hash[primeCounter] = (mathPow(candidate, .5) * maxWord) | 0;
+      k[primeCounter++] = (mathPow(candidate, 1 / 3) * maxWord) | 0;
+    }
+  }
+  ascii += '\x80';
+  while (ascii.length % 64 - 56) ascii += '\x00';
+  for (var i = 0; i < ascii.length; i++) {
+    var j = ascii.charCodeAt(i);
+    if (j >> 8) return '';
+    words[i >> 2] |= j << ((3 - i) % 4) * 8;
+  }
+  words[words.length] = ((asciiBitLength / maxWord) | 0);
+  words[words.length] = (asciiBitLength);
+  for (var j = 0; j < words.length;) {
+    var w = words.slice(j, j += 16);
+    var oldHash = hash;
+    hash = hash.slice(0, 8);
+    for (var i = 0; i < 64; i++) {
+      var w15 = w[i - 15], w2 = w[i - 2];
+      var a = hash[0], e = hash[4];
+      var temp1 = hash[7]
+        + (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25))
+        + ((e & hash[5]) ^ ((~e) & hash[6]))
+        + k[i]
+        + (w[i] = (i < 16) ? w[i] : (
+          w[i - 16]
+          + (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3))
+          + w[i - 7]
+          + (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10))
+        ) | 0);
+      var temp2 = (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22))
+        + ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+      hash = [(temp1 + temp2) | 0].concat(hash);
+      hash[4] = (hash[4] + temp1) | 0;
+    }
+    for (var i = 0; i < 8; i++) hash[i] = (hash[i] + oldHash[i]) | 0;
+  }
+  for (var i = 0; i < 8; i++) {
+    for (var j = 3; j + 1; j--) {
+      var b = (hash[i] >> (j * 8)) & 255;
+      result += ((b < 16) ? 0 : '') + b.toString(16);
+    }
+  }
+  return result;
+}
+function utf8Encode(s) { return unescape(encodeURIComponent(s)); }
+
+function showPortal() {
+  document.getElementById('loginWrap').style.display = 'none';
+  var p = document.getElementById('portal');
+  p.style.display = 'flex';
+}
+function doLogin() {
+  var u = document.getElementById('loginUser').value.trim();
+  var p = document.getElementById('loginPass').value;
+  if (sha256(utf8Encode(u + '|' + p)) === AUTH_HASH) {
+    sessionStorage.setItem(SESSION_KEY, '1');
+    document.getElementById('loginErr').textContent = '';
+    showPortal();
+  } else {
+    document.getElementById('loginErr').textContent = '账号或密码错误';
+  }
+}
+document.getElementById('loginBtn').addEventListener('click', doLogin);
+document.getElementById('loginPass').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') doLogin();
+});
+document.getElementById('loginUser').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') doLogin();
+});
+if (sessionStorage.getItem(SESSION_KEY) === '1') showPortal();
+</script>
 </body>
 </html>
