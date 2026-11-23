@@ -333,6 +333,7 @@ function ordersHTML() {
   html += '<div class="panel"><h3>' + esc(oid) + ' 各品牌对比</h3><div class="wrap"><table class="brand-table"><thead><tr>' +
     '<th style="width:110px">指标</th>';
   for (var jh0 = 0; jh0 < bn; jh0++) html += '<th class="num">' + esc(v.retailSel[jh0]) + groupTag(jh0) + '</th>';
+  for (var jd0 = 1; jd0 < bn; jd0++) html += '<th class="num">差额' + jd0 + '</th>';
   html += '</tr></thead><tbody>';
   var rowsData = [['零售价', t.R], ['批发价', t.W]];
   if (!SALES_MODE) rowsData.push(['成本', t.C]);
@@ -344,6 +345,7 @@ function ordersHTML() {
   rowsData.forEach(function (kv) {
     html += '<tr><td>' + kv[0] + '</td>';
     for (var j = 0; j < bn; j++) html += '<td class="num">' + fmt2(kv[1][j]) + '</td>';
+    for (var jd = 1; jd < bn; jd++) html += '<td class="num">' + fmt2(kv[1][jd] - kv[1][0]) + '</td>';
     html += '</tr>';
   });
   html += '</tbody></table></div></div>';
@@ -425,12 +427,13 @@ function summaryHTML() {
   html += '<div class="panel"><h3>' + bn + ' 个对比品牌平均指标（共 ' + s.n + ' 套）</h3><div class="wrap"><table class="brand-table"><thead><tr>' +
     '<th style="width:170px">指标</th>';
   for (var j2 = 0; j2 < bn; j2++) html += '<th class="num">' + esc(v.retailSel[j2]) + groupTag(j2) + '</th>';
-  html += '<th class="num">' + bn + ' 品牌合计</th></tr></thead><tbody>';
+  for (var jd = 1; jd < bn; jd++) html += '<th class="num">差额' + jd + '</th>';
+  html += '</tr></thead><tbody>';
   function rowAvg(label, arr, cls) {
     var h = '<tr' + (cls ? ' class="' + cls + '"' : '') + '><td>' + label + '</td>';
-    var sum = 0;
-    arr.forEach(function (x) { sum += x; h += '<td class="num">' + fmt2(x) + '</td>'; });
-    return h + '<td class="num">' + fmt2(sum / (arr.length || 1)) + '</td></tr>';
+    arr.forEach(function (x) { h += '<td class="num">' + fmt2(x) + '</td>'; });
+    for (var jd = 1; jd < arr.length; jd++) h += '<td class="num">' + fmt2(arr[jd] - arr[0]) + '</td>';
+    return h + '</tr>';
   }
   var dealer = s.avgR.map(function (x, i) { return x - s.avgW[i]; });
   var agent = s.avgW.map(function (x, i) { return x - s.avgC[i] - s.avgF[i]; });
@@ -443,7 +446,7 @@ function summaryHTML() {
     html += rowAvg('平均代理商利润', agent, 'hl');
   }
   html += '</tbody></table></div>';
-  html += '<div class="hint" style="margin-top:8px">经销商利润 = 平均零售价 − 平均批发价' + (SALES_MODE ? '' : '；代理商利润 = 平均批发价 − 平均成本 − 平均水工福利') + '；「' + bn + ' 品牌合计」列为 ' + bn + ' 个品牌数值之和（利润类取平均）</div></div>';
+  html += '<div class="hint" style="margin-top:8px">经销商利润 = 平均零售价 − 平均批发价' + (SALES_MODE ? '' : '；代理商利润 = 平均批发价 − 平均成本 − 平均水工福利') + '；「差额N」= 第 N+1 个品牌 − 第 1 个品牌</div></div>';
   return html;
 }
 
@@ -544,12 +547,13 @@ function exportSummary() {
   });
   rows.push([]);
   rows.push(['平均指标（共 ' + s.n + ' 套）']);
-  rows.push(['指标'].concat(names).concat([names.length + '品牌合计']));
+  var diffHead = [];
+  for (var jd = 1; jd < names.length; jd++) diffHead.push('差额' + jd);
+  rows.push(['指标'].concat(names).concat(diffHead));
   function addRow(label, arr, mode) {
     var r = [label];
-    var sum = 0;
-    arr.forEach(function (x) { sum += x; r.push(x.toFixed(2)); });
-    r.push((mode === 'avg' ? sum / arr.length : sum).toFixed(2));
+    arr.forEach(function (x) { r.push(x.toFixed(2)); });
+    for (var jd = 1; jd < arr.length; jd++) r.push((arr[jd] - arr[0]).toFixed(2));
     rows.push(r);
   }
   addRow('平均零售价', s.avgR, 'avg');
